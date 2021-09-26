@@ -1,4 +1,5 @@
 
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -8,100 +9,127 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Server extends Thread {
-	
+
 	private static boolean isChamadaAberta = false;
 	private static String numeroTurma;
 	private static ArrayList<String> alunosPresentes;
-	
-	public static void main(String[] args) throws IOException {	
-		
-		ServerSocket serverSocket = new ServerSocket(4433);
-		Scanner sc = new Scanner(System.in);
-				
-		try {
 
-			serverSocket.setSoTimeout(1000000);
-			
-			Thread t = new Server();
-			t.start();
-			
-			while(true) {
-				
-			System.out.println(" ### O servidor foi iniciado na porta: " + serverSocket.getLocalPort() + " Data: " + Util.data() + " ### \n");						
-			System.out.println("<----- Os clientes que se comunicarao a esse servidor podem ser iniciados ----> \n");	
+	private Socket server = null;
+	private DataInputStream input;
+
+	public Server(Socket socket) throws IOException {
+		this.server = socket;
+		input = new DataInputStream(socket.getInputStream());
+	}
 	
-			Socket server = serverSocket.accept();
+	public void run() {
+			
+		try {
 			
 			DataInputStream input = new DataInputStream(server.getInputStream());
-		    DataOutputStream output = new DataOutputStream(server.getOutputStream()); 
-			
+			DataOutputStream output = new DataOutputStream(server.getOutputStream());
+
 			String cliente = input.readUTF();
-			
-			System.out.println(Util.data() + " >>> O Cliente " + cliente + " foi conectado ao servidor. \n");
-			
-			if("Professor".equalsIgnoreCase(cliente))
+
+			if ("Professor".equalsIgnoreCase(cliente)) {
+				System.out.println(Util.data() + " >>> O Cliente " + cliente + " foi conectado ao servidor. \n");
 				processaClienteProfessor(server, input, output);
-			
-			else if ("Aluno".equalsIgnoreCase(cliente))
-				processaClienteAluno(server, input, output);			
 			}
-			
-		} catch(IOException e) {
+
+			else if ("Aluno".equalsIgnoreCase(cliente)) {
+				System.out.println(Util.data() + " >>> O Cliente " + cliente + " foi conectado ao servidor. \n");
+				processaClienteAluno(server, input, output);
+			}
+
+		} catch (IOException e) {
 			e.getMessage();
-		} finally {
-			serverSocket.close();
-		}
-		
-	}
+		}		
+
+}
 	
-	private static void processaClienteAluno(Socket server, DataInputStream input, DataOutputStream output) {
-		try {
-			//1) Matricula aluno
-			String matricula = input.readUTF();
-			//2) Numero Turma
-			String numTurma = input.readUTF();
-			
-			if(isChamadaAberta == true && numTurma.equals(numeroTurma)) {
-				
-				alunosPresentes.add(matricula);
-				
-				System.out.println(Util.data() + " Presenca foi registrada com sucesso! ");
-				
-				output.writeUTF(Util.data() + " Sua presenca foi registrada com sucesso. ");
-				
-			} else {
-				
-				System.out.println(Util.data() + " Nao ha chamada aberta para a turma informada. ");
-				
-				output.writeUTF(Util.data() + " Nao ha chamada aberta para a turma informada. ");
-				
-			}
-			
-		} catch(IOException e) {
-			e.getMessage();
-		} catch(Exception e) {
-			e.getMessage();
-		}
+	public static void main(String[] args) throws IOException, InterruptedException {
 		
+		System.out.println(" ### O servidor foi iniciado na porta: 4433 Data: "
+		+ Util.data() + " ### \n");
+
+		System.out.println("<----- Os clientes que se comunicarao a esse servidor podem ser iniciados ----> \n");
+		
+		alunosPresentes = new ArrayList<>();
+		
+		while(true) {
+			
+			try {
+				
+				ServerSocket serverSocket = new ServerSocket(4433);
+				serverSocket.setSoTimeout(1000000);
+				Socket socket = serverSocket.accept();
+				Server server = new Server(socket);
+				server.start();
+				
+				Thread.sleep(2000);
+				serverSocket.close();
+							
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 		
 	}
 
-	private static void processaClienteProfessor(Socket server, DataInputStream input, DataOutputStream output ) throws IOException {
-		  //1) Numero da Turma
-		 numeroTurma = input.readUTF();
-		 
-		if(numeroTurma != null && !numeroTurma.equals(""))
-			isChamadaAberta = true;		 
-		System.out.println(Util.data() + " >>> A chamada da turma " + numeroTurma + " foi aberta pelo professor. \n");
+	private  void processaClienteAluno(Socket server, DataInputStream input, DataOutputStream output) {
 		
-		//2) chamada finalizada pelo professor;
+		try {
+			// 1) Matricula aluno
+			String matricula = input.readUTF();
+			// 2) Numero Turma
+			String numTurma = input.readUTF();
+
+			if (isChamadaAberta == true && numTurma.equals(numeroTurma)) {
+
+				alunosPresentes.add(matricula);
+
+				System.out.println(Util.data() + " Presenca foi registrada com sucesso! ");
+
+				output.writeUTF("1");
+
+			} else {
+
+				System.out.println(Util.data() + " Nao ha chamada aberta para a turma informada. ");
+
+				output.writeUTF(Util.data() + " Nao ha chamada aberta para a turma informada. ");
+
+			}
+
+		} catch (IOException e) {
+			e.getMessage();
+		} catch (Exception e) {
+			e.getMessage();
+		}
+
+	}
+
+	private  void processaClienteProfessor(Socket server, DataInputStream input, DataOutputStream output)
+			throws IOException {
+		// 1) Numero da Turma
+		numeroTurma = input.readUTF();
+
+		if (numeroTurma != null && !numeroTurma.equals(""))
+			isChamadaAberta = true;
+		System.out.println(Util.data() + " >>> A chamada da turma " + numeroTurma + " foi aberta pelo professor. \n");
+
+		// 2) chamada finalizada pelo professor;
 		String finalizou = input.readUTF();
 		
-		if(finalizou.equals("0")) {
+		String stringMatriculas = String.join(", ", alunosPresentes);
+		
+		//3) Envia lista da matricula dos alunos que responderam a chamada
+		output.writeUTF(stringMatriculas);
+
+		if (finalizou.equals("0")) {
 			isChamadaAberta = false;
 			System.out.println(Util.data() + " >>> A chamada da turma " + numeroTurma + " foi encerrado. \n");
 		}
-			
+
 	}
-	
+
 }

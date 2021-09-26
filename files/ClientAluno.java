@@ -1,5 +1,4 @@
 
-
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -36,9 +35,9 @@ public class ClientAluno {
 		        String codResposta =  input.readUTF();
 		        
 		        if("1".equals(codResposta))
-		        	System.out.println(Util.data() + "Turma: " + numTurma + " - Sua presenca foi registrada com sucesso! Turma: " + numTurma);
+		        	System.out.println(Util.data() + " Turma: " + numTurma + " - Sua presenca foi registrada com sucesso! \n Turma: " + numTurma + ". A aplicacao sera fechada");
 		        else
-		        	System.out.println(Util.data() + " Nao ha chamada aberta para esta turma!");
+		        	System.out.println(Util.data() + " Nao ha chamada aberta para esta turma! Turma: 0");
 		        
 	     
 			}catch(Exception e) {

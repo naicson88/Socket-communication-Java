@@ -25,16 +25,21 @@ public class ClientProfessor {
 	        
 	        System.out.println(Util.data() + " >>> A chamada da turma " + numeroTurma + " foi iniciada... \n\n");
 	        
-	        System.out.println(" Para interromper o chamado, digite a tecla 0 (zero) \n\n ");
+	        System.out.println(" Para interromper o chamado, digite a tecla 0 (zero) \n ");
 	        String finalizou = sc.next();
 	        
 	        while(!"0".equals(finalizou)) {
-	        	System.out.println(" Para interromper o chamado, digite a tecla 0 (zero) \n\n");
+	        	System.out.println(" Para interromper o chamado, digite a tecla 0 (zero) \n");
 	        	finalizou = sc.next();
 	        }
 	        
 	        //2) chamada foi finalizada;
 	        output.writeUTF(finalizou);
+	        
+	        //3) Alunos que registraram chamada
+	        String alunosRegistraramChamada = input.readUTF();
+	        	        
+	        System.out.println(Util.data() + " Matricula dos alunos que responderam a chamada: " + alunosRegistraramChamada);
 	        
 	        System.out.println(Util.data() + " ##### Chamada encerrada, a aplicacao sera finalizada  ######");
      
